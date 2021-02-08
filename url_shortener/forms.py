@@ -29,7 +29,7 @@ class URLShortenerForm(forms.Form):
         help_text=_("The URL you want to shorten."),
         label=_('Long URL to shorten'),
         widget=forms.URLInput(
-            attrs={'placeholder': 'http://www.example.com/index.php?id=321&redirect=1&guest&coords=1,1,3,32,53',
+            attrs={'placeholder': 'https://en.wikipedia.org/wiki/Yorkshire',
                    'required': 'true'},
         ),
     )

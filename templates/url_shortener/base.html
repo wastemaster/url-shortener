@@ -22,11 +22,10 @@
   <div id="wrapper">
     <div class="jumbotron" id="banner" style="padding-bottom: 0;">
       <div class="container">
-        <h1><a href="{% url 'url_shortener:index' %}">URL Shortener</a></h1>
-        <p>Shorten your long URLs and share them with your friends!</p>
+        <h1><a href="{% url 'url_shortener:index' %}">Shortilka</a></h1>
+        <p>Shorten your long URLs</p>
         <ul class="nav nav-tabs" style="border: 0;">
           <li role="presentation" class="{% block index_nav %}{% endblock %}"><a href="{% url 'url_shortener:index' %}">Home</a></li>
-          <li role="presentation" class="{% block analytics_nav %}{% endblock %}"><a href="{% url 'url_shortener:analytics' %}">Analytics</a></li>
           {% block navextra %}{% endblock %}
         </ul>
       </div>
@@ -39,8 +38,7 @@
   <div id="footer">
     <div class="container">
       <p class="muted credit">
-        Copyright &copy; 2016 Sumit Chahal.
-        Source code available on <a href="https://github.com/smtchahal/url-shortener">GitHub</a>.
+        Copyright &copy; 2021 Nomad Technology Labs Inc.
       </p>
     </div>
   </div>

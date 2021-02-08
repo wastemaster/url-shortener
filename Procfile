@@ -1,1 +1,1 @@
-web: python manage.py collectstatic --noinput; gunicorn shorty.wsgi --log-file -
+web: gunicorn shorty.wsgi --log-file -
