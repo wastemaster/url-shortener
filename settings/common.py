@@ -45,9 +45,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
-
-
 ROOT_URLCONF = 'shorty.urls'
 
 TEMPLATES = [

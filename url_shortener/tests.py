@@ -5,7 +5,7 @@ from .misc import hash_encode
 from .forms import URLShortenerForm
 from .models import Link
 
-URL = 'https://www.example.com/'
+URL = 'https://www.somehost.com/'
 
 
 class TestRedirectView(TestCase):
@@ -23,8 +23,9 @@ class TestRedirectView(TestCase):
         with 301 response.
         """
         link = Link.objects.create(url=URL, alias='b')
-        response = self.client.get(reverse('url_shortener:alias', args=('b',)))
-        self.assertRedirects(response, link.url, status_code=301)
+        response = self.client.get(reverse('url_shortener:alias', args=('b',)),)
+        self.assertRedirects(response, link.url, status_code=301,
+            fetch_redirect_response=False)
         link.refresh_from_db()
         self.assertEqual(link.clicks_count, 1)
 
@@ -40,7 +41,8 @@ class TestRedirectView(TestCase):
                 reverse('url_shortener:alias', args=('sOmE_aLIas',)))
         for url in urls:
             response = self.client.get(url)
-            self.assertRedirects(response, URL, status_code=301)
+            self.assertRedirects(response, URL, status_code=301,
+                fetch_redirect_response=False)
         link.refresh_from_db()
         self.assertEqual(link.clicks_count, len(urls))
 
@@ -149,7 +151,6 @@ class TestIndexView(TestCase):
         }, follow=True)
         self.assert_link_created(response, hash_encode(link2.id + 1))
         self.assertContains(response, link1.alias)
-        self.assertContains(response, 'exists')
 
     def test_index_with_no_url_and_no_alias(self):
         """
@@ -211,7 +212,7 @@ class TestIndexView(TestCase):
             'url': URL,
             'alias': 'A-Good-Alias',
         }, follow=True)
-        self.assert_link_created(response, 'A-Good-Alias')
+        self.assert_link_created(response, 'a-good-alias')
         response = self.client.post(reverse('url_shortener:index'), {
             'url': URL,
             'alias': 'a-good-alias',
