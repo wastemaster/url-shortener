@@ -59,6 +59,6 @@ def api(request):
             new_link = generate_link(url, alias)
             data['url'] = url
             data['alias'] = new_link.alias
-            data['link'] = get_absolute_short_url(request, alias,
+            data['link'] = get_absolute_short_url(request, new_link.alias,
                 remove_schema=False)
     return JsonResponse(data)
