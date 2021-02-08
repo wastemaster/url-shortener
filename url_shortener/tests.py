@@ -25,7 +25,7 @@ class TestRedirectView(TestCase):
         link = Link.objects.create(url=URL, alias='b')
         response = self.client.get(reverse('url_shortener:alias', args=('b',)),)
         self.assertRedirects(response, link.url, status_code=301,
-            fetch_redirect_response=False)
+                             fetch_redirect_response=False)
         link.refresh_from_db()
         self.assertEqual(link.clicks_count, 1)
 
@@ -42,7 +42,7 @@ class TestRedirectView(TestCase):
         for url in urls:
             response = self.client.get(url)
             self.assertRedirects(response, URL, status_code=301,
-                fetch_redirect_response=False)
+                                 fetch_redirect_response=False)
         link.refresh_from_db()
         self.assertEqual(link.clicks_count, len(urls))
 
@@ -52,17 +52,6 @@ class TestRedirectView(TestCase):
         """
         response = self.client.get(reverse('url_shortener:alias', args=('blah',)))
         self.assertEqual(response.status_code, 404)
-
-    def test_redirect_preview_with_valid_alias(self):
-        """
-        Preview URL with valid alias should show a preview containing
-        the URL to redirect to.
-        """
-        link = Link.objects.create(url=URL, alias='b')
-        response = self.client.get(reverse('url_shortener:preview', args=('b',)))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, link.url)
-        self.assertEqual(link.clicks_count, 0)
 
 
 def create_link(url):
@@ -84,8 +73,6 @@ class TestIndexView(TestCase):
         Helper function to check assert that a link was created successfully,
         given the `response` and the expected `alias`
         """
-        self.assertRedirects(response, reverse('url_shortener:preview', args=(alias,)))
-        self.assertTemplateUsed(response, 'url_shortener/preview.html')
         link = Link.objects.latest('id')
         self.assertEqual(link.url, URL)
         self.assertEqual(link.alias, alias.lower())
@@ -97,9 +84,9 @@ class TestIndexView(TestCase):
         Submitting index form with no alias specified should
         create a link with auto-generated alias.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
-        }, follow=True)
+        })
         self.assert_link_created(response, hash_encode(1))
 
     def test_index_with_alias_empty_database(self):
@@ -107,7 +94,7 @@ class TestIndexView(TestCase):
         Submitted index form with a specified alias should create
         a link with the specified alias.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
             'alias': 'whatever',
         }, follow=True)
@@ -120,9 +107,9 @@ class TestIndexView(TestCase):
         """
         create_link(URL)
         latest_link = create_link(URL)
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
-        }, follow=True)
+        })
         self.assert_link_created(response, hash_encode(latest_link.id + 1))
 
     def test_index_with_alias_with_database(self):
@@ -132,7 +119,7 @@ class TestIndexView(TestCase):
         """
         create_link(URL)
         create_link(URL)
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
             'alias': 'non-conflicting-alias',
         }, follow=True)
@@ -145,62 +132,62 @@ class TestIndexView(TestCase):
         """
         link1 = create_link(URL)
         link2 = create_link(URL)
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
             'alias': link1.alias,  # Uh oh, conflicts with the first link
         }, follow=True)
         self.assert_link_created(response, hash_encode(link2.id + 1))
-        self.assertContains(response, link1.alias)
 
     def test_index_with_no_url_and_no_alias(self):
         """
         Index page when POSTed with no URL and no alias, should
         return an appropriate error message.
         """
-        response = self.client.post(reverse('url_shortener:index'), {}, follow=True)
-        self.assertContains(response, 'Error')
-        self.assertContains(response, 'field is required')
-        self.assertTemplateUsed('url_shortener/index.html')
+        response = self.client.post(reverse('url_shortener:api'), {})
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {}
+        )
 
     def test_index_with_no_url_and_valid_alias(self):
         """
         Index page when POSTed with no URL and a valid alias, should
         return an appropriate error message.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'alias': 'valid_alias',
         })
-        self.assertContains(response, 'Error')
-        self.assertContains(response, 'field is required')
-        self.assertTemplateUsed('url_shortener/index.html')
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {}
+        )
 
     def test_index_with_no_url_and_invalid_alias(self):
         """
         Index page when POSTed with no URL and an invalid alias, should
         return an appropriate error message.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'alias': '/invalid/alias',
         })
-        self.assertContains(response, 'Error')
-        self.assertContains(response, 'field is required')
-        self.assertContains(response, 'hyphen')
-        self.assertContains(response, 'underscore')
-        self.assertTemplateUsed('url_shortener/index.html')
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {}
+        )
 
     def test_index_with_invalid_alias(self):
         """
         Index page when POSTed invalid alias to, should return an appropriate
         error message.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
             'alias': '/this/is/an/invalid/alias',
         })
-        self.assertContains(response, 'Error')
-        self.assertContains(response, 'hyphen')
-        self.assertContains(response, 'underscore')
-        self.assertTemplateUsed('url_shortener/index.html')
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {}
+        )
 
     def test_index_with_multiple_uppercase_aliases(self):
         """
@@ -208,12 +195,12 @@ class TestIndexView(TestCase):
         created a Link with a given alias, multiple combinations of that
         alias shouldn't be allowed.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
             'alias': 'A-Good-Alias',
         }, follow=True)
         self.assert_link_created(response, 'a-good-alias')
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
             'alias': 'a-good-alias',
         })
@@ -225,39 +212,40 @@ class TestIndexView(TestCase):
         Index page when POSTed invalid URL to, should return an appropriate
         error message.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': '/this/is/an/invalid/url',
         })
-        self.assertContains(response, 'Error')
-        self.assertContains(response, 'Enter a valid URL')
-        self.assertTemplateUsed('url_shortener/index.html')
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {}
+        )
 
     def test_index_with_url_too_long(self):
         """
         Index page when POSTed a URL too long to should return an appropriate
         error message.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL + '?' + ''.join([str(c) for c in range(3000)]),
         })
-        self.assertContains(response, 'Error')
-        self.assertContains(response, 'length')
-        self.assertContains(response, '2083')
-        self.assertTemplateUsed('url_shortener/index.html')
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {}
+        )
 
     def test_index_with_alias_too_long(self):
         """
         Index page when POSTed an alias too long to should return an appropriate
         error message.
         """
-        response = self.client.post(reverse('url_shortener:index'), {
+        response = self.client.post(reverse('url_shortener:api'), {
             'url': URL,
             'alias': ''.join([hash_encode(i) for i in range(300)]),
         })
-        self.assertContains(response, 'Error')
-        self.assertContains(response, 'length')
-        self.assertContains(response, '255')
-        self.assertTemplateUsed('url_shortener/index.html')
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {}
+        )
 
 
 class TestURLShortenerFormValidation(TestCase):

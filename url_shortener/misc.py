@@ -2,7 +2,6 @@ import string
 
 from hashids import Hashids
 from django.urls import reverse
-from django.contrib import messages
 from .models import Link
 
 HASH_SALT = 'VyIZlWoq7VQCvJmq54gVHz5mb7GbaXdcT3Qz8dRssMyaYpTZl2ONBBnDA788Ef'
@@ -43,7 +42,6 @@ def generate_link(url, alias):
         if Link.objects.filter(alias__exact=alias):
             # handle alias conflict
             new_link.alias = hash_encode(latest_link.id+1)
-            original_alias = new_link.alias
         else:
             new_link.alias = alias or hash_encode(latest_link.id+1)
     except Link.DoesNotExist:
