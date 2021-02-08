@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import (HttpResponseRedirect,
                          HttpResponsePermanentRedirect)
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 from .misc import (hash_encode,
                    get_absolute_short_url,
@@ -45,7 +46,7 @@ def redirect(request, alias, extra=''):
     link.save()
     return HttpResponsePermanentRedirect(link.url + extra)
 
-
+@csrf_exempt
 def api(request):
     data = {}
     if request.method == 'POST':
