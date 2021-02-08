@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
 from django.http import (HttpResponseRedirect,
                          HttpResponsePermanentRedirect)
+from django.http import JsonResponse
 
 from .misc import (hash_encode,
                    get_absolute_short_url,
@@ -43,3 +44,17 @@ def redirect(request, alias, extra=''):
     link.clicks_count += 1
     link.save()
     return HttpResponsePermanentRedirect(link.url + extra)
+
+
+def api(request):
+    data = {}
+    if request.method == 'POST':
+        form = URLShortenerForm(request.POST)
+        if form.is_valid():
+            original_alias = form.cleaned_data['alias']
+            alias = original_alias.lower()
+            url = form.cleaned_data['url']
+            new_link = generate_link(url, alias)
+            data['url'] = url
+            data['alias'] = new_link.alias
+    return JsonResponse(data)
