@@ -46,6 +46,7 @@ def redirect(request, alias, extra=''):
     link.save()
     return HttpResponsePermanentRedirect(link.url + extra)
 
+
 @csrf_exempt
 def api(request):
     data = {}
@@ -58,4 +59,6 @@ def api(request):
             new_link = generate_link(url, alias)
             data['url'] = url
             data['alias'] = new_link.alias
+            data['link'] = reverse('url_shortener:preview',
+                args=(new_link.alias,))
     return JsonResponse(data)
